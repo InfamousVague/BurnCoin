@@ -1,26 +1,10 @@
 pragma solidity ^0.4.2;
 
-contract owned {
-    address public owner;                      // Owner of contract
-
-    function owned() {
-        owner = msg.sender;
-    }
-
-    modifier onlyOwner {
-        if (msg.sender != owner) throw;
-        _;
-    }
-
-    function transferOwnership(address newOwner) onlyOwner {
-        owner = newOwner;
-    }
-}
-
 // Burn coin burns a little bit of coin on every transaction gradually recuding
 // the total supply
-contract Burn is owned {
+contract Burn {
     // Constants
+    address public owner;
     string public standard = 'Token 0.1';           // Token standard
     uint public supply = 10000000000000000000000000;// Total Supply
     string public name = 'Burn';                    // Name of the token
@@ -65,7 +49,7 @@ contract Burn is owned {
         symbol = _symbol;
         decimals = _decimals;
         burnRate = _burnRate;
-        balances[owner] = _supply;
+        owner = msg.sender;
     }
     
     /* @function burnCoin
@@ -106,31 +90,40 @@ contract Burn is owned {
      * owner. Remaining avalible coins will be sent to the contract owner.
      */
     
+    /* @function productionOnly
+     * @name productionOnly
+     * @description require ICO funding to be over
+     */
     modifier productionOnly () {
         if (ICOActive) throw;
         _;
     }
 
-
+    /* @function closeICO
+     * @name closeICO
+     * @description only allow owner
+     */
     function closeICO() onlyOwner {
-        balances[owner] = supply - ICOCirculation;              // Send remaining coin to owner
+        burned = supply - ICOCirculation;                       // Unbought coins are burned
         ICOActive = false;                                      // Dignify that ICO funding is over
     }
 
+    /* @function ICOTransfer
+     * @name ICOTransfer
+     * @param {address} _to - Address to send coin to
+     * @param {uint} _value - Amount of ETH we received
+     */
     function ICOTransfer(address _to, uint _value) public returns (bool success) {
         if (ICOCirculation < supply) {
             uint payout = _value * exchangeRate;
             balances[_to] += payout;
-            ICOCirculation += payout;
-            balances[owner] -= payout;
             return true;
         } else {
             return false;
         }
     }
 
-    // Executes when somebody sends ether to contract address
-    function () payable {
+    function () {
         ICOTransfer(msg.sender, msg.value);
     }
 }
