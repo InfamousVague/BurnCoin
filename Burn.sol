@@ -49,12 +49,12 @@ contract Burn {
         return (amount - burn);
     }
 
-    /* @function transfer
+    /* @function Transfer
      * @name transfer
      * @param {address} receiver - Address to send coin to
      * @param {uint} amount - Amount of coin to send
      */
-    function transfer(address receiver, uint amount) public {
+    function Transfer(address receiver, uint amount) public {
         if (balances[msg.sender] < amount) throw;
         if (amount < burnRate * 1000) throw;
         balances[msg.sender] -= amount;
