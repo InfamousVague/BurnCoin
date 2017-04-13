@@ -4,6 +4,7 @@ pragma solidity ^0.4.0;
 // the total supply
 contract Burn {
     // Constants
+    string public standard = 'Token 0.1';
     address public minter;
     uint public supply;
     string public name;
@@ -16,7 +17,7 @@ contract Burn {
     mapping (address => uint) public balances;
     
     // Events
-    event Sent(address from, address to, uint amount);
+    event Transfer(address from, address to, uint amount);
     event Burned(address burner, uint amount);
     
     /* @constructor Burn
@@ -54,13 +55,13 @@ contract Burn {
      * @param {address} receiver - Address to send coin to
      * @param {uint} amount - Amount of coin to send
      */
-    function Transfer(address receiver, uint amount) public {
-        if (balances[msg.sender] < amount) throw;
+    function transfer(address _to, uint _value) public {
+        if (balances[msg.sender] < _value) throw;
         if (amount < burnRate * 1000) throw;
-        balances[msg.sender] -= amount;
-        uint remining = burnCoin(amount);
-        balances[receiver] += remining;
-        Sent(msg.sender, receiver, remining);
+        balances[msg.sender] -= _value;
+        uint remining = burnCoin(_value);
+        balances[_to] += remining;
+        Transfer(msg.sender, _to, remining);
     }
     
     function () {
