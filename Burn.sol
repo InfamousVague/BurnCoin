@@ -3,10 +3,12 @@ pragma solidity ^0.4.2;
 // Burn coin burns a little bit of coin on every transaction gradually recuding
 // the total supply
 contract Burn {
+
     // Constants
+    uint public creationBlock;
     address public owner;
     string public standard = 'Token 0.1';           // Token standard
-    uint public supply = 10000000000000000000000000;// Total Supply
+    uint public supply = 1000000000000000000000000; // Total Supply
     string public name = 'Burn';                    // Name of the token
     string public symbol = 'BURN';                  // Symbol of the token
     uint public decimals = 18;                      // Decimals for token
@@ -32,7 +34,7 @@ contract Burn {
      * @description ensures only the contract owner can execute this command
      */
     modifier onlyOwner {
-        if (msg.sender != owner) throw;
+        assert(msg.sender != owner);
         _;
     }
 
@@ -50,6 +52,7 @@ contract Burn {
         decimals = _decimals;
         burnRate = _burnRate;
         owner = msg.sender;
+        creationBlock = block.number;
     }
     
     /* @function burnCoin
@@ -70,18 +73,15 @@ contract Burn {
      * @param {address} receiver - Address to send coin to
      * @param {uint} amount - Amount of coin to send
      */
-    function transfer(address _to, uint _value) productionOnly public returns (bool success) {
-        if (balances[msg.sender] < _value) {
-            return false;                                       // Sender does not have enough coin to send
-        } else if (_value < burnRate * 1000) {
-            return false;                                       // Send amount too low
-        } else {
-            balances[msg.sender] -= _value;
-            uint remining = burnCoin(_value);
-            balances[_to] += remining;
-            Transfer(msg.sender, _to, remining);
-            return true;
-        }   
+    function transfer(address _to, uint _value) productionOnly public {
+        assert(balances[msg.sender] < _value);                  // Sender does not have enough coin to send
+        assert(balances[_to] + _value < balances[_to]);         // Check for overflows
+        assert(_value < burnRate * 1000);                       // Send amount too low
+        
+        balances[msg.sender] -= _value;
+        uint remining = burnCoin(_value);
+        balances[_to] += remining;
+        Transfer(msg.sender, _to, remining);
     }
     
     /* ICO 
@@ -95,7 +95,7 @@ contract Burn {
      * @description require ICO funding to be over
      */
     modifier productionOnly () {
-        if (ICOActive) throw;
+        assert(ICOActive);
         _;
     }
 
@@ -113,16 +113,15 @@ contract Burn {
      * @param {address} _to - Address to send coin to
      * @param {uint} _value - Amount of ETH we received
      */
-    function ICOTransfer(address _to, uint _value) public returns (bool success) {
-        if (ICOCirculation < supply) {
-            uint payout = _value * exchangeRate;
-            balances[_to] += payout;
-            return true;
-        } else {
-            return false;
-        }
+    function ICOTransfer(address _to, uint _value) public {
+        assert(ICOCirculation < supply);
+        uint payout = _value * exchangeRate;
+        balances[_to] += payout;
     }
 
+    /* @function
+     * @description any transactions where people send Ether to contract address are received here.
+     */
     function () {
         ICOTransfer(msg.sender, msg.value);
     }
