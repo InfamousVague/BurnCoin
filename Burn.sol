@@ -34,7 +34,7 @@ contract Burn {
      * @description ensures only the contract owner can execute this command
      */
     modifier onlyOwner {
-        assert(msg.sender != owner);
+        require(msg.sender != owner);
         _;
     }
 
@@ -74,9 +74,9 @@ contract Burn {
      * @param {uint} amount - Amount of coin to send
      */
     function transfer(address _to, uint _value) productionOnly public {
-        assert(balances[msg.sender] < _value);                  // Sender does not have enough coin to send
-        assert(balances[_to] + _value < balances[_to]);         // Check for overflows
-        assert(_value < burnRate * 1000);                       // Send amount too low
+        require(balances[msg.sender] < _value);                  // Sender does not have enough coin to send
+        require(balances[_to] + _value < balances[_to]);         // Check for overflows
+        require(_value < burnRate * 1000);                       // Send amount too low
         
         balances[msg.sender] -= _value;
         uint remining = burnCoin(_value);
@@ -95,7 +95,7 @@ contract Burn {
      * @description require ICO funding to be over
      */
     modifier productionOnly () {
-        assert(ICOActive);
+        require(ICOActive);
         _;
     }
 
@@ -114,7 +114,7 @@ contract Burn {
      * @param {uint} _value - Amount of ETH we received
      */
     function ICOTransfer(address _to, uint _value) public {
-        assert(ICOCirculation < supply);
+        require(ICOCirculation < supply);
         uint payout = _value * exchangeRate;
         balances[_to] += payout;
     }
